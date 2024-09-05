@@ -1,15 +1,17 @@
 package rewards.internal.restaurant;
 
-import common.money.Percentage;
-import org.springframework.dao.EmptyResultDataAccessException;
-import rewards.Dining;
-import rewards.internal.account.Account;
-
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+
+import common.money.Percentage;
+import rewards.Dining;
+import rewards.internal.account.Account;
 
 /**
  * Loads restaurants from a data source using the JDBC API.
@@ -39,9 +41,11 @@ import java.sql.SQLException;
 public class JdbcRestaurantRepository implements RestaurantRepository {
 
 	private DataSource dataSource;
+	private JdbcTemplate jdbcTemplate;
 
 	public JdbcRestaurantRepository(DataSource dataSource) {
 		this.dataSource = dataSource;
+		this.jdbcTemplate = new JdbcTemplate(dataSource);
 	}
 
 	public Restaurant findByMerchantNumber(String merchantNumber) {
@@ -49,17 +53,18 @@ public class JdbcRestaurantRepository implements RestaurantRepository {
 				+ " from T_RESTAURANT where MERCHANT_NUMBER = ?";
 		Restaurant restaurant = null;
 
-		try (Connection conn = dataSource.getConnection();
-			 PreparedStatement ps = conn.prepareStatement(sql) ){
-			ps.setString(1, merchantNumber);
-			ResultSet rs = ps.executeQuery();
-			advanceToNextRow(rs);
-			restaurant = mapRestaurant(rs);
-		} catch (SQLException e) {
-			throw new RuntimeException("SQL exception occurred finding by merchant number", e);
-		}
+//		try (Connection conn = dataSource.getConnection();
+//			 PreparedStatement ps = conn.prepareStatement(sql) ){
+//			ps.setString(1, merchantNumber);
+//			ResultSet rs = ps.executeQuery();
+//			advanceToNextRow(rs);
+//			restaurant = mapRestaurant(rs);
+//		} catch (SQLException e) {
+//			throw new RuntimeException("SQL exception occurred finding by merchant number", e);
+//		}
 
-		return restaurant;
+		
+		return jdbcTemplate.queryForObject(sql, new RestaurantRowMapper(),  merchantNumber);
 	}
 
 	/**
@@ -145,4 +150,11 @@ public class JdbcRestaurantRepository implements RestaurantRepository {
 			return "neverAvailable";
 		}
 	}
+	
+	private class RestaurantRowMapper implements RowMapper<Restaurant> {
+	    public Restaurant mapRow(ResultSet rs, int rowNum) throws SQLException {
+	        return mapRestaurant(rs);
+	    }
+	}
+
 }
