@@ -33,7 +33,6 @@ public class AccountClientTests {
     private Random random = new Random();
 
     @Test
-    @Disabled
     public void listAccounts_using_invalid_user_should_return_401() throws Exception {
         ResponseEntity<String> responseEntity
                 = restTemplate.withBasicAuth("invalid", "invalid")
@@ -106,9 +105,13 @@ public class AccountClientTests {
     // - Use the code above as a guidance
     @Test
     public void createAccount_using_user_should_return_403() throws Exception {
+        String number = String.format("12345%4d", random.nextInt(10000));
+        Account account = new Account(number, "John Doe");
+        account.addBeneficiary("Jane Doe");
 
-
-
+        ResponseEntity<Account> accountResponseEntity = restTemplate.withBasicAuth("user", "user")
+                .postForEntity("/accounts", account, Account.class);
+        assertThat(accountResponseEntity.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
