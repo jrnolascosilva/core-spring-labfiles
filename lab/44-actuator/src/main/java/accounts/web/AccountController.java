@@ -54,9 +54,11 @@ public class AccountController {
      * - Set a extra tag with "source"/"accountSummary" key/value pair
 	 */
 	@GetMapping(value = "/accounts")
-	public List<Account> accountSummary() {
+	public @ResponseBody List<Account> accountSummary() {
+		logger.debug("Logging message within accountSummary()"); // add this line
 		return accountManager.getAllAccounts();
 	}
+
 
 	/**
 	 *
